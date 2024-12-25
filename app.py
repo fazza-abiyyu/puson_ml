@@ -27,28 +27,5 @@ def predict():
     }
     return jsonify(result)
 
-@app.route('/predict/default', methods=['GET'])
-def predict_default():
-    current_year = datetime.now().year
-    start_year = current_year - 1
-    end_year = current_year
-    fetch_joined_data(start_year, end_year)
-    accuracy, mae, r2, future_cases_male, future_cases_female, num_pred_male, num_pred_female = train_and_predict(start_year, end_year)
-    
-    result = {
-        'Akurasi Model': accuracy * 100,
-        'Mean Absolute Error (MAE)': format(mae, ".5f"),
-        'R² Score': r2 * 100,
-        'Prediksi Probabilitas Gender (male)': future_cases_male[0] * 100,
-        'Jumlah Prediksi (male)': num_pred_male,
-        'Prediksi Probabilitas Gender (female)': future_cases_female[0] * 100,
-        'Jumlah Prediksi (female)': num_pred_female
-    }
-    return jsonify(result)
-
-@app.route('/', methods=['GET'])
-def home():
-    return "API untuk memprediksi status kekerdilan. Gunakan titik akhir /predict dengan metode GET dengan start_year dan end_year sebagai parameter kueri. Gunakan /predict untuk prediksi default."
-
 if __name__ == '__main__':
     app.run(debug=True, port=5011)
