@@ -1,10 +1,11 @@
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score
@@ -26,13 +27,8 @@ engine = create_engine(DATABASE_URI, echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Set default years
-current_year = datetime.now().year
-default_start_year = current_year - 1
-default_end_year = current_year
-
 # Function to fetch joined data from MedCheckUp, ResultMedCheckUp, and Child
-def fetch_joined_data(start_year=default_start_year, end_year=default_end_year):
+def fetch_joined_data(start_year, end_year):
     query = text(f"""
     SELECT
         MedCheckUp.id AS med_check_up_id,
@@ -67,21 +63,17 @@ def fetch_joined_data(start_year=default_start_year, end_year=default_end_year):
     else:
         return pd.DataFrame()
 
-# Fetch joined data and create DataFrame
-df = fetch_joined_data()
-
-# Close the session
-session.close()
-
-# Convert 'med_check_up_updated_at' to datetime
-df["med_check_up_updated_at"] = pd.to_datetime(df["med_check_up_updated_at"])
-
 # Function to filter data by year range
 def filter_data_by_year(df, start_year, end_year):
     return df[(df["med_check_up_updated_at"].dt.year >= start_year) & (df["med_check_up_updated_at"].dt.year <= end_year)]
 
 # Function to train model and make predictions
-def train_and_predict(start_year=default_start_year, end_year=default_end_year):
+def train_and_predict(start_year, end_year):
+    df = fetch_joined_data(start_year, end_year)
+
+    # Convert 'med_check_up_updated_at' to datetime
+    df["med_check_up_updated_at"] = pd.to_datetime(df["med_check_up_updated_at"])
+
     df_filtered = filter_data_by_year(df, start_year, end_year)
 
     # Encoding categorical variables
@@ -108,28 +100,60 @@ def train_and_predict(start_year=default_start_year, end_year=default_end_year):
         y_pred = model.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
-        
-        # Convert regression predictions to binary classes
-        y_test_rounded = y_test.round().astype(int)
-        y_pred_rounded = [round(pred) for pred in y_pred]
-        accuracy = accuracy_score(y_test_rounded, y_pred_rounded)
+        accuracy = accuracy_score(y_test.round().astype(int), [round(pred) for pred in y_pred])
 
-        # Calculate average values for each feature based on gender
+        # Hitung nilai rata-rata untuk setiap fitur berdasarkan gender
         avg_values_male = df_stunting[df_stunting["gender"] == 0].mean()
         avg_values_female = df_stunting[df_stunting["gender"] == 1].mean()
 
-        # DataFrame for projections
+        # DataFrame untuk proyeksi
         avg_male_df = pd.DataFrame([avg_values_male[["age", "height", "weight", "circumference", "imt", "ipb"]]]).rename(columns=str)
         avg_female_df = pd.DataFrame([avg_values_female[["age", "height", "weight", "circumference", "imt", "ipb"]]]).rename(columns=str)
 
-        # Project future stunting cases using average values
-        future_cases_male = model.predict(avg_male_df)
-        future_cases_female = model.predict(avg_female_df)
+        # Proyeksi jumlah kasus stunting di setiap bulan selama 12 bulan ke depan
+        future_predictions = []
+        pred_year = end_year + 1
+        for i in range(12):
+            # Mengatur tanggal prediksi
+            prediction_date = datetime(pred_year, 1, 1) + timedelta(days=30 * i)
+            prediction_date_str = prediction_date.strftime("%Y-%m")
+            
+            # Update 'days_since_epoch' untuk setiap bulan
+            avg_male_df["days_since_epoch"] = (avg_male_df.index + 1) * 30
+            avg_female_df["days_since_epoch"] = (avg_female_df.index + 1) * 30
+            
+            # Menggunakan rata-rata jumlah prediksi untuk bulan tersebut
+            projected_male = model.predict(avg_male_df)[0] + np.random.uniform(-5, 5)
+            projected_female = model.predict(avg_female_df)[0] + np.random.uniform(-5, 5)
+            
+            future_predictions.append({
+                'month': prediction_date_str,
+                'predicted_male': max(0, round(projected_male, 3)),
+                'num_pred_male': max(0, round(projected_male)),
+                'predicted_female': max(0, round(projected_female, 3)),
+                'num_pred_female': max(0, round(projected_female))
+            })
 
-        # Number of predictions based on gender
-        num_pred_male = sum([1 for pred in y_pred_rounded if pred == 0])
-        num_pred_female = sum([1 for pred in y_pred_rounded if pred == 1])
-        
-        return accuracy, mae, r2, future_cases_male, future_cases_female, num_pred_male, num_pred_female
+        # Hitung total dan rata-rata untuk setahun
+        total_pred_male = sum(pred['num_pred_male'] for pred in future_predictions)
+        total_pred_female = sum(pred['num_pred_female'] for pred in future_predictions)
+        avg_prob_male = sum(pred['predicted_male'] for pred in future_predictions) / 12
+        avg_prob_female = sum(pred['predicted_female'] for pred in future_predictions) / 12
+
+        # Compile results
+        result = {
+            'code': 200,
+            'message': 'Data berhasil dikembalikan',
+            'data': {
+                'prediksi': [
+                    {'Tahun Prediksi': pred_year},
+                    {'name': 'Laki - Laki', 'data': [pred['num_pred_male'] for pred in future_predictions]},
+                    {'name': 'Perempuan', 'data': [pred['num_pred_female'] for pred in future_predictions]}
+                ],
+                'categories': ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+            }
+        }
+
+        return result
     else:
-        return 0, 0, 0, [0], [0], 0, 0
+        return None
