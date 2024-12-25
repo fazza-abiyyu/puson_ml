@@ -2,16 +2,17 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score
-import numpy as np
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Database configuration
-DATABASE_USER = "puson_dev"
-DATABASE_PASSWORD = quote_plus("Admin123!")
-DATABASE_HOST = "8.215.70.170"
-DATABASE_NAME = "puson_dev"
+DATABASE_USER = os.getenv("DATABASE_USER")
+DATABASE_PASSWORD = quote_plus(os.getenv("DATABASE_PASSWORD"))
+DATABASE_HOST = os.getenv("DATABASE_HOST")
+DATABASE_NAME = os.getenv("DATABASE_NAME")
 
 # Connect to the database using SQLAlchemy
 DATABASE_URI = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
