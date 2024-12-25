@@ -5,11 +5,14 @@ from models import train_and_predict, fetch_joined_data
 
 app = Flask(__name__)
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET'])
 def predict():
-    data = request.get_json(force=True)
-    start_year = data.get("start_year")
-    end_year = data.get("end_year")
+    start_year = request.args.get('start_year', type=int)
+    end_year = request.args.get('end_year', type=int)
+    
+    if not start_year or not end_year:
+        return jsonify({'error': 'Harap berikan start_year dan end_year sebagai parameter kueri'}), 400
+
     fetch_joined_data(start_year, end_year)
     accuracy, mae, r2, future_cases_male, future_cases_female, num_pred_male, num_pred_female = train_and_predict(start_year, end_year)
     
@@ -24,7 +27,7 @@ def predict():
     }
     return jsonify(result)
 
-@app.route('/predict', methods=['GET'])
+@app.route('/predict/default', methods=['GET'])
 def predict_default():
     current_year = datetime.now().year
     start_year = current_year - 1
@@ -45,7 +48,7 @@ def predict_default():
 
 @app.route('/', methods=['GET'])
 def home():
-    return "API for predicting stunting status. Use /predict endpoint with POST method. Use /predict for default prediction."
+    return "API untuk memprediksi status kekerdilan. Gunakan titik akhir /predict dengan metode GET dengan start_year dan end_year sebagai parameter kueri. Gunakan /predict untuk prediksi default."
 
 if __name__ == '__main__':
     app.run(debug=True, port=5011)
