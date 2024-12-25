@@ -18,7 +18,7 @@ def predict():
     
     result = {
         'Akurasi Model': accuracy * 100,
-        'Mean Absolute Error (MAE)': mae * 100,
+        'Mean Absolute Error (MAE)': format(mae, ".5f"),
         'R² Score': r2 * 100,
         'Prediksi Probabilitas Gender (male)': future_cases_male[0] * 100,
         'Jumlah Prediksi (male)': num_pred_male,
@@ -37,7 +37,7 @@ def predict_default():
     
     result = {
         'Akurasi Model': accuracy * 100,
-        'Mean Absolute Error (MAE)': mae * 100,
+        'Mean Absolute Error (MAE)': format(mae, ".5f"),
         'R² Score': r2 * 100,
         'Prediksi Probabilitas Gender (male)': future_cases_male[0] * 100,
         'Jumlah Prediksi (male)': num_pred_male,
