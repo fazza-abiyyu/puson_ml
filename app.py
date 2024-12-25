@@ -32,6 +32,11 @@ def predict():
             "average_probabilities": {
                 "avg_prob_male": result['average_probabilities']['avg_prob_male'],
                 "avg_prob_female": result['average_probabilities']['avg_prob_female']
+            },
+            "model_evaluation": {
+                "accuracy": f"{result['accuracy'] * 100:.2f}%",
+                "mae": f"{result['mae']:.5f}",
+                "r2": f"{result['r2']:.5f}"
             }
         }
         response = {
