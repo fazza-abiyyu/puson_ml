@@ -63,56 +63,67 @@ def fetch_joined_data(start_year, end_year):
     else:
         return pd.DataFrame()
 
-# Function to filter data by year range
-def filter_data_by_year(df, start_year, end_year):
-    return df[(df["med_check_up_updated_at"].dt.year >= start_year) & (df["med_check_up_updated_at"].dt.year <= end_year)]
-
 # Function to train model and make predictions
 def train_and_predict(start_year, end_year):
     df = fetch_joined_data(start_year, end_year)
-
+    pred_year = end_year + 1
     # Convert 'med_check_up_updated_at' to datetime
     df["med_check_up_updated_at"] = pd.to_datetime(df["med_check_up_updated_at"])
-
+    
+    # Konversi tanggal menjadi hari sejak epoch
+    df["days_since_epoch"] = (df["med_check_up_updated_at"] - pd.Timestamp("1970-01-01")) // pd.Timedelta("1D")
+    
+    # Fungsi untuk menyaring data berdasarkan rentang tahun
+    def filter_data_by_year(df, start_year, end_year):
+        return df[(df["med_check_up_updated_at"].dt.year >= start_year) & (df["med_check_up_updated_at"].dt.year <= end_year)]
+    
+    # Filter data berdasarkan rentang tahun yang dipilih
     df_filtered = filter_data_by_year(df, start_year, end_year)
-
+    
     # Encoding categorical variables
     df_filtered.loc[:, "gender"] = df_filtered["gender"].map({"male": 0, "female": 1})
     df_filtered.loc[:, "status"] = df_filtered["status"].map({"normal": 0, "stunting": 1, "overweight": 2, "obese": 3})
-
-    # Filter only data with "stunting" status
+    
+    # Filter hanya data dengan status "stunting"
     df_stunting = df_filtered[df_filtered["status"] == 1]
 
     # Check if df_stunting is not empty
     if not df_stunting.empty:
-        # Features and target
+        # Features dan target
         X = df_stunting[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]
-        y = df_stunting["gender"]  # Target: gender (0 for male, 1 for female)
-
-        # Data for regression
+        y = df_stunting["gender"]  # Target: gender (0 untuk male, 1 untuk female)
+    
+        # Data untuk regresi
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # Regression model
+    
+        # Model regresi
         model = RandomForestRegressor(n_estimators=200, random_state=42)
         model.fit(X_train, y_train)
-
-        # Model evaluation
+    
+        # Evaluasi model
         y_pred = model.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
-        accuracy = accuracy_score(y_test.round().astype(int), [round(pred) for pred in y_pred])
-
+        
+        # Konversi prediksi regresi menjadi kelas biner
+        y_test_rounded = y_test.round().astype(int)
+        y_pred_rounded = [round(pred) for pred in y_pred]
+        accuracy = accuracy_score(y_test_rounded, y_pred_rounded)
+    
         # Hitung nilai rata-rata untuk setiap fitur berdasarkan gender
         avg_values_male = df_stunting[df_stunting["gender"] == 0].mean()
         avg_values_female = df_stunting[df_stunting["gender"] == 1].mean()
-
+    
+        # Hitung jumlah prediksi berdasarkan gender
+        num_pred_male = sum(1 for pred in y_pred_rounded if pred == 0)
+        num_pred_female = sum(1 for pred in y_pred_rounded if pred == 1)
+    
         # DataFrame untuk proyeksi
         avg_male_df = pd.DataFrame([avg_values_male[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]]).rename(columns=str)
         avg_female_df = pd.DataFrame([avg_values_female[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]]).rename(columns=str)
-
+    
         # Proyeksi jumlah kasus stunting di setiap bulan selama 12 bulan ke depan
         future_predictions = []
-        pred_year = end_year + 1
         for i in range(12):
             # Mengatur tanggal prediksi
             prediction_date = datetime(pred_year, 1, 1) + timedelta(days=30 * i)
@@ -123,8 +134,8 @@ def train_and_predict(start_year, end_year):
             avg_female_df["days_since_epoch"] += 30
             
             # Menggunakan rata-rata jumlah prediksi untuk bulan tersebut
-            projected_male = model.predict(avg_male_df)[0] + np.random.uniform(-5, 5)
-            projected_female = model.predict(avg_female_df)[0] + np.random.uniform(-5, 5)
+            projected_male = num_pred_male / 12 + np.random.uniform(-5, 5)
+            projected_female = num_pred_female / 12 + np.random.uniform(-5, 5)
             
             future_predictions.append({
                 'month': prediction_date_str,
