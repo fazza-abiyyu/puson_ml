@@ -123,6 +123,7 @@ def train_and_predict(start_year, end_year):
         avg_female_df = pd.DataFrame([avg_values_female[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]]).rename(columns=str)
     
         # Proyeksi jumlah kasus stunting di setiap bulan selama 12 bulan ke depan
+        np.random.seed(42)
         future_predictions = []
         for i in range(12):
             # Mengatur tanggal prediksi
