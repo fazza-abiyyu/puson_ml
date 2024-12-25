@@ -5,6 +5,9 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score
 
 # Load environment variables from .env file
 load_dotenv()
