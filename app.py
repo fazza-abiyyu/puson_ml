@@ -24,7 +24,15 @@ def predict():
             "categories": [
                 "Januari", "Februari", "Maret", "April", "Mei", "Juni",
                 "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-            ]
+            ],
+            "total_predictions": {
+                "total_pred_male": result['total_predictions']['total_pred_male'],
+                "total_pred_female": result['total_predictions']['total_pred_female']
+            },
+            "average_probabilities": {
+                "avg_prob_male": result['average_probabilities']['avg_prob_male'],
+                "avg_prob_female": result['average_probabilities']['avg_prob_female']
+            }
         }
         response = {
             "code": 200,
