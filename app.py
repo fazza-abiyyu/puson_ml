@@ -14,12 +14,12 @@ def predict():
     accuracy, mae, r2, future_cases_male, future_cases_female, num_pred_male, num_pred_female = train_and_predict(start_year, end_year)
     
     result = {
-        'Akurasi Model': accuracy,
-        'Mean Absolute Error (MAE)': mae,
-        'R² Score': r2,
-        'Prediksi Probabilitas Gender (male)': future_cases_male[0],
+        'Akurasi Model': accuracy * 100,
+        'Mean Absolute Error (MAE)': mae * 100,
+        'R² Score': r2 * 100,
+        'Prediksi Probabilitas Gender (male)': future_cases_male[0] * 100,
         'Jumlah Prediksi (male)': num_pred_male,
-        'Prediksi Probabilitas Gender (female)': future_cases_female[0],
+        'Prediksi Probabilitas Gender (female)': future_cases_female[0] * 100,
         'Jumlah Prediksi (female)': num_pred_female
     }
     return jsonify(result)
@@ -33,19 +33,19 @@ def predict_default():
     accuracy, mae, r2, future_cases_male, future_cases_female, num_pred_male, num_pred_female = train_and_predict(start_year, end_year)
     
     result = {
-        'Akurasi Model': accuracy,
-        'Mean Absolute Error (MAE)': mae,
-        'R² Score': r2,
-        'Prediksi Probabilitas Gender (male)': future_cases_male[0],
+        'Akurasi Model': accuracy * 100,
+        'Mean Absolute Error (MAE)': mae * 100,
+        'R² Score': r2 * 100,
+        'Prediksi Probabilitas Gender (male)': future_cases_male[0] * 100,
         'Jumlah Prediksi (male)': num_pred_male,
-        'Prediksi Probabilitas Gender (female)': future_cases_female[0],
+        'Prediksi Probabilitas Gender (female)': future_cases_female[0] * 100,
         'Jumlah Prediksi (female)': num_pred_female
     }
     return jsonify(result)
 
 @app.route('/', methods=['GET'])
 def home():
-    return "API for predicting stunting status. Use /predict endpoint with POST method. Use /predict/default for default prediction."
+    return "API for predicting stunting status. Use /predict endpoint with POST method. Use /predict for default prediction."
 
 if __name__ == '__main__':
     app.run(debug=True, port=5011)
