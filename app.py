@@ -26,17 +26,17 @@ def predict():
                 "Juli", "Agustus", "September", "Oktober", "November", "Desember"
             ],
             "total_predictions": {
-                "total_pred_male": result['total_predictions']['total_pred_male'],
-                "total_pred_female": result['total_predictions']['total_pred_female']
+                "total_pred_male": f"{result['total_predictions']['total_pred_male']*100}%",
+                "total_pred_female": f"{result['total_predictions']['total_pred_female']*100}%"
             },
             "average_probabilities": {
                 "avg_prob_male": result['average_probabilities']['avg_prob_male'],
                 "avg_prob_female": result['average_probabilities']['avg_prob_female']
             },
             "model_evaluation": {
-                "accuracy": f"{result['accuracy'] * 100:.2f}%",
+                "accuracy": f"{result['accuracy'] * 100}%",
                 "mae": f"{result['mae']:.5f}",
-                "r2": f"{result['r2']:.5f}"
+                "r2": result['r2']
             }
         }
         response = {
