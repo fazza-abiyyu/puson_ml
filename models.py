@@ -118,10 +118,6 @@ def train_and_predict(start_year, end_year):
             prediction_date = datetime(pred_year, 1, 1) + timedelta(days=30 * i)
             prediction_date_str = prediction_date.strftime("%Y-%m")
             
-            # Update 'days_since_epoch' untuk setiap bulan
-            avg_male_df["days_since_epoch"] = (avg_male_df.index + 1) * 30
-            avg_female_df["days_since_epoch"] = (avg_female_df.index + 1) * 30
-            
             # Menggunakan rata-rata jumlah prediksi untuk bulan tersebut
             projected_male = model.predict(avg_male_df)[0] + np.random.uniform(-5, 5)
             projected_female = model.predict(avg_female_df)[0] + np.random.uniform(-5, 5)
@@ -142,15 +138,17 @@ def train_and_predict(start_year, end_year):
 
         # Compile results
         result = {
-            'code': 200,
-            'message': 'Data berhasil dikembalikan',
-            'data': {
-                'prediksi': [
-                    {'Tahun Prediksi': pred_year},
-                    {'name': 'Laki - Laki', 'data': [pred['num_pred_male'] for pred in future_predictions]},
-                    {'name': 'Perempuan', 'data': [pred['num_pred_female'] for pred in future_predictions]}
-                ],
-                'categories': ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+            'accuracy': accuracy,
+            'mae': mae,
+            'r2': r2,
+            'monthly_predictions': future_predictions,
+            'total_predictions': {
+                'total_pred_male': total_pred_male,
+                'total_pred_female': total_pred_female
+            },
+            'average_probabilities': {
+                'avg_prob_male': avg_prob_male,
+                'avg_prob_female': avg_prob_female
             }
         }
 
