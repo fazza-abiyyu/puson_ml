@@ -86,7 +86,7 @@ def train_and_predict(start_year, end_year):
     # Check if df_stunting is not empty
     if not df_stunting.empty:
         # Features and target
-        X = df_stunting[["age", "height", "weight", "circumference", "imt", "ipb"]]
+        X = df_stunting[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]
         y = df_stunting["gender"]  # Target: gender (0 for male, 1 for female)
 
         # Data for regression
@@ -107,8 +107,8 @@ def train_and_predict(start_year, end_year):
         avg_values_female = df_stunting[df_stunting["gender"] == 1].mean()
 
         # DataFrame untuk proyeksi
-        avg_male_df = pd.DataFrame([avg_values_male[["age", "height", "weight", "circumference", "imt", "ipb"]]]).rename(columns=str)
-        avg_female_df = pd.DataFrame([avg_values_female[["age", "height", "weight", "circumference", "imt", "ipb"]]]).rename(columns=str)
+        avg_male_df = pd.DataFrame([avg_values_male[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]]).rename(columns=str)
+        avg_female_df = pd.DataFrame([avg_values_female[["age", "height", "weight", "circumference", "imt", "ipb", "days_since_epoch"]]]).rename(columns=str)
 
         # Proyeksi jumlah kasus stunting di setiap bulan selama 12 bulan ke depan
         future_predictions = []
@@ -117,6 +117,10 @@ def train_and_predict(start_year, end_year):
             # Mengatur tanggal prediksi
             prediction_date = datetime(pred_year, 1, 1) + timedelta(days=30 * i)
             prediction_date_str = prediction_date.strftime("%Y-%m")
+            
+            # Update 'days_since_epoch' untuk setiap bulan
+            avg_male_df["days_since_epoch"] += 30
+            avg_female_df["days_since_epoch"] += 30
             
             # Menggunakan rata-rata jumlah prediksi untuk bulan tersebut
             projected_male = model.predict(avg_male_df)[0] + np.random.uniform(-5, 5)
