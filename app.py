@@ -43,7 +43,7 @@ def predict():
         response = {
             "code": 200,
             "message": "Data berhasil dikembalikan",
-            "Tahun Prediksi": end_year + 1,
+            "tahun_prediksi": end_year + 1,
             "data": data
         }
         return jsonify(response)
