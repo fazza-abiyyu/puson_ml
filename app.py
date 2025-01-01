@@ -19,7 +19,6 @@ def predict():
     if result:
         data = {
             "prediksi": [
-                {"Tahun Prediksi": end_year + 1},
                 {"name": "Laki - Laki", "data": [pred['num_pred_male'] for pred in result['monthly_predictions']]},
                 {"name": "Perempuan", "data": [pred['num_pred_female'] for pred in result['monthly_predictions']]}
             ],
@@ -44,6 +43,7 @@ def predict():
         response = {
             "code": 200,
             "message": "Data berhasil dikembalikan",
+            "Tahun Prediksi": end_year + 1,
             "data": data
         }
         return jsonify(response)
